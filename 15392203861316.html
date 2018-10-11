@@ -1,0 +1,355 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+    
+  React-intl 教程 - 
+  
+  </title>
+ <meta name="description" content="">
+ <link href="atom.xml" rel="alternate" title="" type="application/atom+xml">
+    <link rel="stylesheet" href="asset/css/foundation.min.css" />
+    <link rel="stylesheet" href="asset/css/docs.css" />
+
+    <script src="asset/js/vendor/modernizr.js"></script>
+    <script src="asset/js/vendor/jquery.js"></script>
+    <script src="asset/highlightjs/highlight.pack.js"></script>
+    <link href="asset/highlightjs/styles/github.css" media="screen, projection" rel="stylesheet" type="text/css">
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+  </head>
+  <body class="antialiased hide-extras">
+    
+    <div class="marketing off-canvas-wrap" data-offcanvas>
+      <div class="inner-wrap">
+
+
+<nav class="top-bar docs-bar hide-for-small" data-topbar>
+
+<div id="header">
+    <h1><a href="index.html"></a></h1>
+</div>
+
+</nav>
+        <nav class="tab-bar show-for-small">
+  <a href="javascript:void(0)" class="left-off-canvas-toggle menu-icon">
+    <span> &nbsp; </span>
+  </a>
+</nav>
+
+<aside class="left-off-canvas-menu">
+      <ul class="off-canvas-list">
+      <li><a href="index.html">Home</a></li>
+      
+
+      
+      </ul>
+    </aside>
+
+<a class="exit-off-canvas" href="#"></a>
+
+        <section id="main-content" role="main" class="scroll-container">
+
+          <div class="row">
+            <div class="large-3 medium-3 columns">
+              <div class="hide-for-small">
+                <div class="sidebar">
+                <nav>
+                  <ul id="side-nav" class="side-nav">
+
+                    
+
+                    
+                  </ul>
+                </nav>
+                </div>
+              </div>
+            </div>
+            <div class="large-9 medium-9 columns">
+
+ <div class="markdown-body">
+<h1>React-intl 教程</h1>
+
+<h1 id="toc_0">gitHub</h1>
+
+<p><a href="https://github.com/yahoo/react-intl">https://github.com/yahoo/react-intl</a></p>
+
+<h1 id="toc_1">React-intl简要介绍</h1>
+
+<p>React-intl是FormatJS的一部分，内置实现Date/Number/Time的国际格式化；</p>
+
+<p>可以自定义映射关系，完成值对之间的替换（这是这篇文章的主要内容）；</p>
+
+<p>通过获取浏览器的language来设置显示中文/英文（通过自定义映射，而非自动全文转换）；</p>
+
+<p>常用于实现静态内容，如按钮文字，公司名称的转换；</p>
+
+<h1 id="toc_2">locale/zh_CN.js</h1>
+
+<pre><code>/*在rect-intl语言中，只支持简单的json数据，通常为了可读性我们会写成如下格式，可使用falt转化*/
+//flat:https://github.com/hughsk/flat
+import flatten from &#39;flat&#39;;
+const zh = {
+    http: {
+        server_error: &#39;与服务器的连接出现问题，请稍后再试。&#39;,
+        rate_limited: &#39;访问次数过多，请稍后再试。&#39;
+    },
+    button: {
+        next: &#39;下一步&#39;,
+        finish: &#39;完成&#39;
+    },
+}
+
+export default flatten(zh);
+
+
+输出如下:
+{
+    &#39;http.server_error&#39;:&#39;与服务器的连接出现问题，请稍后再试。&#39;,
+    &#39;http.rate_limited&#39;:&#39;访问次数过多，请稍后再试。&#39;,
+    &#39;button.next&#39;:&#39;下一步&#39;,
+    &#39;button.finish&#39;:&#39;完成&#39;
+
+
+}
+</code></pre>
+
+<h1 id="toc_3">index.js</h1>
+
+<pre><code>import React from &#39;react&#39;;
+import ReactDOM from &#39;react-dom&#39;;
+// 从&#39;react-intl&#39;中引入addLocaleData,IntlProvider,FormattedMessage三个格式化组件；
+import {addLocaleData,IntlProvider,FormattedMessage} from &#39;react-intl&#39;;
+/*
+*引入与navigator.languages[0]所对应的语言；
+*如果没有引入对应的语言，会使用默认的“en”；
+*导致FormattedMessage的映射不会成功；
+*/
+import zh from &#39;react-intl/locale-data/zh&#39;;
+import en from &#39;react-intl/locale-data/en&#39;;
+/*
+*引入自定义的映射表；
+*通过与FormattedMessage的id值来当索引映射返回值；
+*/
+import zh_CN from &#39;./locale/zh_CN&#39;;
+import en_US from &#39;./locale/en_US&#39;;
+import App from &#39;./components/app&#39;;
+/*
+*messages是render()时IntlProvider组件所传的props，属性名固定：messages；
+*messages返回值为映射表，比如：&#39;react-intl/locale-data/zh&#39;&amp;&amp;&#39;./locale/zh_CN&#39;；
+*/
+let messages = {};
+messages[&quot;en-US&quot;] = en_US;
+messages[&quot;zh-CN&quot;] = zh_CN;
+/*
+*获取浏览器设置的语言；
+*按我demo中的设置，返回[&quot;zh-CN&quot;, &quot;zh&quot;, &quot;en-US&quot;, &quot;en&quot;]，排序与语言设置顺序一直；
+*/
+const languages = navigator.languages;
+const currentLang = languages[0];
+
+// 载入语言数据；
+//载入一个addLocaleData(zh);
+//载入多个；
+addLocaleData([...zh,...en]);
+
+ReactDOM.render(
+    // IntlProvider为&#39;react-intl&#39;指定的包裹组件名；
+    &lt;IntlProvider locale={currentLang} messages={messages[currentLang]}&gt;
+        &lt;App /&gt;
+    &lt;/IntlProvider&gt;,
+    document.body
+)
+</code></pre>
+
+<h1 id="toc_4">app.js</h1>
+
+<pre><code class="language-js">/*基本用法：*/
+
+    import React, {Component} from &#39;react&#39;;
+    import {FormattedMessage} from &#39;react-intl&#39;;
+    
+    class App extends Component {
+        constructor(props) {
+            super(props);
+        }
+        render() {
+    
+            /* 
+            *FormattedMessage组件中的信息parser后显示以&lt;span&gt;包裹的文本；
+            *可以通过tagName指定其它标签包裹；
+            *以id属性的值&quot;hello&quot;为索引——索引到自定义的映射表&#39;./locale/zh_CN&#39;中去；
+            *messages[&#39;hello&#39;]——messages为父组件IntlProvider的props的messages属性；
+            *若没有上述的返回值，则显示defaultMessage的值&quot;React Intl Translations Example&quot;;
+            */
+            /*
+            *FormattedMessage添加子元素或ReactElement；
+            *  &lt;FormattedMessage id=&quot;hello&quot;&gt;
+            *      {(formattedValue)=&gt;(
+            *          &lt;em&gt;{formattedValue}&lt;/em&gt;
+            *      )}
+            *  &lt;/FormattedMessage&gt;
+            */
+            return (
+                &lt;div&gt;
+                    &lt;h1&gt;
+                        &lt;div&gt;
+                            &lt;FormattedMessage
+                                id=&quot;hello&quot;
+                                defaultMessage=&quot;React Intl Translations Example&quot;
+                            /&gt;
+                        &lt;/div&gt;
+                    &lt;/h1&gt;
+    
+                    &lt;h4&gt;
+                        &lt;FormattedMessage
+                            tagName = &#39;p&#39;
+                            id=&#39;superHello&#39;
+                            defaultMessage=&quot;Locales:北京&quot;
+                            values={{
+                                someone:&#39;zxdobest&#39;
+                            }}
+                        /&gt;
+                    &lt;/h4&gt;
+                    &lt;h2&gt;
+                        &lt;FormattedMessage id=&quot;hello&quot;&gt;
+                            {(formattedValue)=&gt;(
+                                &lt;em&gt;{formattedValue}&lt;/em&gt;
+                            )}
+                        &lt;/FormattedMessage&gt;
+                    &lt;/h2&gt;
+                &lt;/div&gt;
+            );
+        }
+    }
+    
+    export default App;
+    
+
+</code></pre>
+
+<pre><code class="language-js">
+import React from &#39;react&#39;;
+import { injectIntl, intlShape, FormattedMessage } from &#39;react-intl&#39;;
+
+const ChildComponent = ({ intl }) =&gt; {
+    //传入的{intl}名称不可更改；
+    const getMessage = intl.messages;
+    return(
+        &lt;section&gt;
+            {/*
+                *通过intl.messages获取映射属性的方法；
+                * 可以和任意内容（如：HTML标签）组合；
+                * 如果你的key里有包含.，只能使用[]取值
+                * */}
+                
+            &lt;a&gt;{getMessage[&#39;hello&#39;]}&lt;/a&gt;
+            {/*通过FormattedMessage格式化，可以传入参数{values}*/}
+            &lt;FormattedMessage
+                tagName = &#39;p&#39;
+                id=&#39;superHello&#39;
+                defaultMessage=&quot;Locales:北京&quot;
+                values={{
+                    someone:&#39;zxdobest&#39;
+                }}
+            /&gt;
+            {/*
+               *这种结构，类同于intl.messages.superHello可以和其它内容任意组合；
+               *能且仅能获取superHello的映射；
+               * 目前尚未找到如果在第一种方法中传入values；
+            */}
+            &lt;FormattedMessage id=&quot;superHello&quot; values={{
+                someone:&#39;mihuartuanr&#39;
+            }}&gt;
+                {(formattedValue)=&gt;(
+                    &lt;p&gt;{formattedValue}&lt;/p&gt;
+                )}
+            &lt;/FormattedMessage&gt;
+        &lt;/section&gt;
+    );
+}
+
+ChildComponent.propTypes = {
+    intl: intlShape.isRequired
+}
+
+export default injectIntl(ChildComponent);
+
+</code></pre>
+
+
+</div>
+
+<br /><br />
+<hr />
+
+<div class="row clearfix">
+  <div class="large-6 columns">
+	<div class="text-left" style="padding:15px 0px;">
+		
+	        <a href="15392203861263.html"  title="Previous Post: 区块链">&laquo; 区块链</a>
+	    
+	</div>
+  </div>
+  <div class="large-6 columns">
+	<div class="text-right" style="padding:15px 0px;">
+		
+	        <a href="15392203861366.html" 
+	        title="Next Post: "> &raquo;</a>
+	    
+	</div>
+  </div>
+</div>
+
+<div class="row">
+<div style="padding:0px 0.93em;" class="share-comments">
+
+</div>
+</div>
+<script type="text/javascript">
+	$(function(){
+		var currentURL = '15392203861316.html';
+		$('#side-nav a').each(function(){
+			if($(this).attr('href') == currentURL){
+				$(this).parent().addClass('active');
+			}
+		});
+	});
+</script>  
+</div></div>
+
+
+<div class="page-bottom">
+  <div class="row">
+  <hr />
+  <div class="small-9 columns">
+  <p class="copyright">Copyright &copy; 2015
+Powered by <a target="_blank" href="http://www.mweb.im">MWeb</a>,&nbsp; 
+Theme used <a target="_blank" href="http://github.com">GitHub CSS</a>.</p>
+  </div>
+  <div class="small-3 columns">
+  <p class="copyright text-right"><a href="#header">TOP</a></p>
+  </div>
+   
+  </div>
+</div>
+
+        </section>
+      </div>
+    </div>
+    
+    
+    <script src="asset/js/foundation.min.js"></script>
+    <script src="asset/js/foundation/foundation.offcanvas.js"></script>
+    <script>
+      $(document).foundation();
+
+     
+    </script>
+    
+
+
+  </body>
+</html>
